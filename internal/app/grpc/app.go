@@ -36,14 +36,14 @@ func (a *App) Run() error {
 		a.log.Info("start GRPC server to failed")
 		return fmt.Errorf("error:%s", err.Error())
 	}
-	a.log.Debug("starting GRPC server on", "address", l.Addr().String())
-	a.log.Info("starting GRPC server")
 	if err := a.gRPCServer.Serve(l); err != nil {
 		return fmt.Errorf("error:%s", err.Error())
 	}
+	a.log.Debug("starting GRPC server on", "address", l.Addr().String())
+	a.log.Info("starting GRPC server")
 	return nil
 }
 func (a *App) Stop() {
-	a.log.Info("grpc server ")
+	a.log.Info("grpc server stopped")
 	a.gRPCServer.GracefulStop()
 }

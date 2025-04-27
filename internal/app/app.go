@@ -19,7 +19,7 @@ func New(log *slog.Logger, grpcPort string, storagePath string) *App {
 		log.Debug("storage is not init, on", "path:", storagePath)
 		os.Exit(1)
 	}
-	workService := workdb.New(log, storage, storage, storage, storage)
+	workService := workdb.New(log, storage, storage, storage, storage, storage)
 	grpcApp := grpcapp.New(log, workService, grpcPort)
 	return &App{
 		GRPCServer: grpcApp,

@@ -37,18 +37,18 @@ func (s *Storage) CreateTask(ctx context.Context, title string, description stri
 	return id, nil
 }
 
-func (s *Storage) DeleteTask(ctx context.Context, title string) error {
-	_, err := s.db.Exec(ctx, "DELETE FROM tasks WHERE title=$1", title)
+func (s *Storage) DeleteTask(ctx context.Context, id int64) error {
+	_, err := s.db.Exec(ctx, "DELETE FROM tasks WHERE id=$1", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete task: %w", err)
 	}
 	return nil
 }
 
-func (s *Storage) DoneTask(ctx context.Context, title string) error {
+func (s *Storage) DoneTask(ctx context.Context, id int64) error {
 	_, err := s.db.Exec(ctx,
-		"UPDATE tasks SET done = true WHERE title = $1 AND done = false",
-		title)
+		"UPDATE tasks SET done = true WHERE id = $1 AND done = false",
+		id)
 	if err != nil {
 		return fmt.Errorf("failed to mark task as done: %w", err)
 	}
@@ -83,4 +83,13 @@ func (s *Storage) GetAllTask(ctx context.Context) ([]models.Task, error) {
 	}
 
 	return tasks, nil
+}
+func (s *Storage) ChangeTask(ctx context.Context, id int64, title string, description string) error {
+	_, err := s.db.Exec(ctx,
+		"UPDATE tasks SET title = $1, description=$2 WHERE id = $3",
+		title, description, id)
+	if err != nil {
+		return fmt.Errorf("change task is failed")
+	}
+	return nil
 }

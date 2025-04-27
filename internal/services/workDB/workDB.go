@@ -14,18 +14,22 @@ type WorkDB struct {
 	deleteTask TaskDelete
 	donetask   TaskDone
 	getalltask TaskGetAll
+	changetask TaskChange
 }
 type TaskCreate interface {
 	CreateTask(ctx context.Context, title string, description string) (int64, error)
 }
 type TaskDelete interface {
-	DeleteTask(ctx context.Context, title string) error
+	DeleteTask(ctx context.Context, id int64) error
 }
 type TaskDone interface {
-	DoneTask(ctx context.Context, title string) error
+	DoneTask(ctx context.Context, id int64) error
 }
 type TaskGetAll interface {
 	GetAllTask(ctx context.Context) ([]models.Task, error)
+}
+type TaskChange interface {
+	ChangeTask(ctx context.Context, id int64, title string, description string) error
 }
 
 func New(log *slog.Logger,
@@ -33,6 +37,7 @@ func New(log *slog.Logger,
 	taskdelete TaskDelete,
 	taskdone TaskDone,
 	taskgetall TaskGetAll,
+	taskchange TaskChange,
 ) *WorkDB {
 	return &WorkDB{
 		log:        log,
@@ -40,6 +45,7 @@ func New(log *slog.Logger,
 		deleteTask: taskdelete,
 		donetask:   taskdone,
 		getalltask: taskgetall,
+		changetask: taskchange,
 	}
 }
 
@@ -52,16 +58,16 @@ func (w *WorkDB) CreateTask(ctx context.Context, title string, description strin
 	return id, nil
 
 }
-func (w *WorkDB) DeleteTask(ctx context.Context, title string) error {
-	err := w.deleteTask.DeleteTask(ctx, title)
+func (w *WorkDB) DeleteTask(ctx context.Context, id int64) error {
+	err := w.deleteTask.DeleteTask(ctx, id)
 	if err != nil {
 		w.log.Info("delete task to failed")
 		return fmt.Errorf("delete task to failed, err:%s", err.Error())
 	}
 	return nil
 }
-func (w *WorkDB) DoneTask(ctx context.Context, title string) error {
-	err := w.donetask.DoneTask(ctx, title)
+func (w *WorkDB) DoneTask(ctx context.Context, id int64) error {
+	err := w.donetask.DoneTask(ctx, id)
 	if err != nil {
 		w.log.Info("delete task to failed")
 		return fmt.Errorf("created task to failed, err:%s", err.Error())
@@ -76,4 +82,12 @@ func (w *WorkDB) GetAllTask(ctx context.Context) ([]models.Task, error) {
 		return nil, fmt.Errorf("getall tasks to failed, err:%s", err.Error())
 	}
 	return tasks, nil
+}
+func (w *WorkDB) ChangeTask(ctx context.Context, id int64, title string, description string) error {
+	err := w.changetask.ChangeTask(ctx, id, title, description)
+	if err != nil {
+		w.log.Info("change task to failed")
+		return fmt.Errorf("changed task to failed")
+	}
+	return nil
 }

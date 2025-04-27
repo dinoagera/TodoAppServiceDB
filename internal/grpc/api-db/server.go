@@ -13,9 +13,10 @@ import (
 
 type WorkDB interface {
 	CreateTask(ctx context.Context, title string, description string) (int64, error)
-	DeleteTask(ctx context.Context, title string) error
-	DoneTask(ctx context.Context, title string) error
+	DeleteTask(ctx context.Context, id int64) error
+	DoneTask(ctx context.Context, id int64) error
 	GetAllTask(ctx context.Context) ([]models.Task, error)
+	ChangeTask(ctx context.Context, id int64, title string, description string) error
 }
 type serverAPI struct {
 	pb.UnimplementedDBWorkServer
@@ -32,41 +33,41 @@ func (s *serverAPI) CreateTask(ctx context.Context, req *pb.CreateRequest) (*pb.
 	id, err := s.workdb.CreateTask(ctx, req.Title, req.Description)
 	if err != nil {
 		return &pb.CreateResponse{
-			Id:    0,
-			Reply: "error while creating task",
+			Id:      0,
+			Message: "error while creating task",
 		}, fmt.Errorf("creat to failed")
 	}
 	return &pb.CreateResponse{
-		Id:    id,
-		Reply: "create task is successfully",
+		Id:      id,
+		Message: "create task is successfully",
 	}, nil
 }
 func (s *serverAPI) DeleteTask(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	if req.GetTitle() == "" {
-		return nil, status.Error(codes.InvalidArgument, "title is empty")
+	if req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Id is correctly")
 	}
-	err := s.workdb.DeleteTask(ctx, req.Title)
+	err := s.workdb.DeleteTask(ctx, req.Id)
 	if err != nil {
 		return &pb.DeleteResponse{
-			Reply: "task was not deleted",
+			Message: "task was not deleted",
 		}, fmt.Errorf("task was not deleted")
 	}
 	return &pb.DeleteResponse{
-		Reply: "task deleted successfully",
+		Message: "task deleted successfully",
 	}, nil
 }
 func (s *serverAPI) DoneTask(ctx context.Context, req *pb.DoneRequest) (*pb.DoneResponse, error) {
-	if req.GetTitle() == "" {
-		return nil, status.Error(codes.InvalidArgument, "title is empty")
+	if req.GetId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Id is correctly")
 	}
-	err := s.workdb.DoneTask(ctx, req.Title)
+	err := s.workdb.DoneTask(ctx, req.Id)
 	if err != nil {
 		return &pb.DoneResponse{
-			Reply: "task is not done",
+			Message: "task is not done",
 		}, fmt.Errorf("task is not done")
 	}
 	return &pb.DoneResponse{
-		Reply: "task done successfully",
+		Message: "task done successfully",
 	}, nil
 }
 func (s *serverAPI) GetAllTask(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
@@ -87,5 +88,16 @@ func (s *serverAPI) GetAllTask(ctx context.Context, req *pb.GetAllRequest) (*pb.
 	}
 	return &pb.GetAllResponse{
 		Tasks: pbTasks,
+	}, nil
+}
+func (s *serverAPI) ChangeTask(ctx context.Context, req *pb.ChangeRequest) (*pb.ChangeResponse, error) {
+	err := s.workdb.ChangeTask(ctx, req.Id, req.Title, req.Description)
+	if err != nil {
+		return &pb.ChangeResponse{
+			Message: "Task is not changed",
+		}, fmt.Errorf("failed to changed task")
+	}
+	return &pb.ChangeResponse{
+		Message: "Task is changed",
 	}, nil
 }
