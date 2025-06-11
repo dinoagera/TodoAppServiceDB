@@ -13,8 +13,8 @@ type Config struct {
 	StoragePath string `env:"STORAGE_PATH" env-required:"true"`
 }
 type GRPC struct {
-	Port    string        `env:"GRPC_PORT" env-default:"8081"`
-	TimeOut time.Duration `env:"GRPC_TIME_OUT"`
+	Port    string        `env:"GRPC_PORT_API_DB" env-default:"8081"`
+	TimeOut time.Duration `env:"GRPC_TIME_OUT_API_DB"`
 }
 
 func InitConfig(log *slog.Logger) *Config {

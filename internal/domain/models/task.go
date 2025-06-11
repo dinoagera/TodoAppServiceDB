@@ -5,4 +5,5 @@ type Task struct {
 	Title       string
 	Description string
 	Done        bool
+	Uid         int64
 }

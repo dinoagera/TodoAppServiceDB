@@ -3,7 +3,7 @@ module github.com/dinoagera/api-db
 go 1.24.1
 
 require (
-	github.com/dinoagera/proto v0.0.4
+	github.com/dinoagera/proto v0.0.6
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.7.4
 	google.golang.org/grpc v1.71.1

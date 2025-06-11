@@ -1,21 +1,19 @@
 FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
-
-COPY go.mod go.sum ./
-
-RUN go mod download
-
 COPY . .
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
-RUN go build -o /app/main ./cmd/api-db/main.go
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/main .
+COPY --from=builder /go/bin/goose /usr/local/bin/goose
+COPY --from=builder /app/migrations ./migrations
 
-FROM alpine:3.18
-
-COPY --from=builder /app/main /main
-
-COPY migrations /migrations
+COPY .env .env
 
 EXPOSE 8081
 
-CMD ["/main"]
+CMD ["sh", "-c", "goose -dir ./migrations postgres \"$DB_URL\" up && ./main"]

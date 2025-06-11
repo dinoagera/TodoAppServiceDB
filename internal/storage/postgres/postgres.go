@@ -26,38 +26,44 @@ func New(storagePath string) (*Storage, error) {
 	return &Storage{db: conn}, nil
 }
 
-func (s *Storage) CreateTask(ctx context.Context, title string, description string) (int64, error) {
+func (s *Storage) CreateTask(ctx context.Context, title string, description string, uid int64) (int64, error) {
 	var id int64
 	err := s.db.QueryRow(ctx,
-		"INSERT INTO tasks(title, description) VALUES($1, $2) RETURNING id",
-		title, description).Scan(&id)
+		"INSERT INTO tasks(title, description, uid) VALUES($1, $2, $3) RETURNING id",
+		title, description, uid).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create task: %w", err)
 	}
 	return id, nil
 }
 
-func (s *Storage) DeleteTask(ctx context.Context, id int64) error {
-	_, err := s.db.Exec(ctx, "DELETE FROM tasks WHERE id=$1", id)
+func (s *Storage) DeleteTask(ctx context.Context, id int64, uid int64) error {
+	result, err := s.db.Exec(ctx, "DELETE FROM tasks WHERE id=$1 AND uid=$2", id, uid)
 	if err != nil {
 		return fmt.Errorf("failed to delete task: %w", err)
 	}
-	return nil
-}
-
-func (s *Storage) DoneTask(ctx context.Context, id int64) error {
-	_, err := s.db.Exec(ctx,
-		"UPDATE tasks SET done = true WHERE id = $1 AND done = false",
-		id)
-	if err != nil {
-		return fmt.Errorf("failed to mark task as done: %w", err)
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("task not found or access denied")
 	}
 	return nil
 }
 
-func (s *Storage) GetAllTask(ctx context.Context) ([]models.Task, error) {
+func (s *Storage) DoneTask(ctx context.Context, id int64, uid int64) error {
+	result, err := s.db.Exec(ctx,
+		"UPDATE tasks SET done = true WHERE id = $1 AND done = false AND uid=$2",
+		id, uid)
+	if err != nil {
+		return fmt.Errorf("failed to mark task as done: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("task not found or access denied")
+	}
+	return nil
+}
+
+func (s *Storage) GetAllTask(ctx context.Context, uid int64) ([]models.Task, error) {
 	rows, err := s.db.Query(ctx,
-		"SELECT id, title, description, done FROM tasks")
+		"SELECT id, title, description, done FROM tasks WHERE uid=$1", uid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tasks: %w", err)
 	}
@@ -84,12 +90,15 @@ func (s *Storage) GetAllTask(ctx context.Context) ([]models.Task, error) {
 
 	return tasks, nil
 }
-func (s *Storage) ChangeTask(ctx context.Context, id int64, title string, description string) error {
-	_, err := s.db.Exec(ctx,
-		"UPDATE tasks SET title = $1, description=$2 WHERE id = $3",
-		title, description, id)
+func (s *Storage) ChangeTask(ctx context.Context, id int64, title string, description string, uid int64) error {
+	result, err := s.db.Exec(ctx,
+		"UPDATE tasks SET title = $1, description=$2 WHERE id = $3 AND uid=$4",
+		title, description, id, uid)
 	if err != nil {
 		return fmt.Errorf("change task is failed")
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("task not found or access denied")
 	}
 	return nil
 }
